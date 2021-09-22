@@ -4,12 +4,21 @@
 package ch.so.agi;
 
 import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Insert;
+import org.jooq.InsertQuery;
+import org.jooq.Named;
+import org.jooq.Param;
 import org.jooq.Parser;
 import org.jooq.Query;
+import org.jooq.QueryPart;
+import org.jooq.Table;
+import org.jooq.VisitContext;
 import org.jooq.conf.ParamType;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
+import org.jooq.impl.DefaultVisitListener;
 
 public class App {
     public String getGreeting() {
@@ -22,33 +31,76 @@ public class App {
         
         
         
-        DSLContext ctx = DSL.using(
-                new DefaultConfiguration().set(
-                    new Settings().withParamType(ParamType.FORCE_INDEXED)));
-
-        Parser parser = ctx.parser();
-        Query query = parser.parseQuery(
-            "select * "
-          + "from tableName as t1 "
-          + "inner join tableName2 as t2 "
-          + "on t1.tableColumnId=t2.tableColumnId "
-          + "where t1.tableColumnId=4 and t1.tableColumnName='test'");
-
-        System.out.println(ctx
-            .renderContext()
-            .paramType(ParamType.FORCE_INDEXED)
-            .visit(query)
-            .render());
+//        DSLContext ctx = DSL.using(
+//                new DefaultConfiguration().set(
+//                    new Settings().withParamType(ParamType.FORCE_INDEXED)));
+//
+//        Parser parser = ctx.parser();
+//        Query query = parser.parseQuery(
+//            "select * "
+//          + "from tableName as t1 "
+//          + "inner join tableName2 as t2 "
+//          + "on t1.tableColumnId=t2.tableColumnId "
+//          + "where t1.tableColumnId=4 and t1.tableColumnName='test'");
+//
+//        System.out.println(ctx
+//            .renderContext()
+//            .paramType(ParamType.FORCE_INDEXED)
+//            .visit(query)
+//            .render());
 
             
         
         
+        var parser =
+        DSL.using(new DefaultConfiguration().set(new DefaultVisitListener() {
+            @Override
+            public void visitStart(VisitContext ctx) {
+                if (ctx.queryPart() instanceof Field && !(ctx.queryPart() instanceof Param))
+                    System.out.println(((Named) ctx.queryPart()).getQualifiedName());
+                
+                if (ctx.queryPart() instanceof Table) {
+                    System.out.println("table: " + ((Named) ctx.queryPart()).getQualifiedName());
+                    
+                    
+                    if (ctx.queryPart() instanceof org.jooq.CommonTableExpression) {
+                        System.out.println("CTE dammi");
+                    }
+                    
+                    
+                    
+                    
+                    
+                }
+                 
+//                if (ctx.queryPart() instanceof Insert) {
+//                    System.out.println("adfadfadf");
+//                    InsertQuery q = (InsertQuery) ctx.queryPart();
+//                    System.out.println(q);
+//                }
+                
+                System.out.println(ctx.queryPart().getClass());
+            }
+        })).parser();
+
+        System.out.println("Query 1");
+        System.out.println("-------");
+        parser.parseQuery("create table `filetest`(`id` int not null auto_increment, `Meno` varchar(21) null, `Priezvisko` varchar(24) null, `Vek` int null, constraint `pk_filetest` primary key (`id`))").getSQL();
+
+        System.out.println();
+        System.out.println("Query 2");
+        System.out.println("-------");
+        parser.parseQuery("insert into `filetest` (`Meno`, `Priezvisko`, `Vek`) values ('Jack', 'Daniels', '21')").getSQL();
+
+        System.out.println();
+        System.out.println("Query 3");
+        System.out.println("-------");
+        parser.parseQuery("WITH foo AS (SELECT a,b FROM dm01), bar AS (SELECT * FROM foo) INSERT INTO gaga (c,d) SELECT a,b FROM bar").getSQL();
+
+
         
         
         
         
-        
-        
-        System.out.println(new App().getGreeting());
     }
 }

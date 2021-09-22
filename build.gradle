@@ -20,7 +20,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.jooq', name: 'jooq', version: '3.13.2'
+    implementation 'org.jooq:jooq:3.13.2'
 
 
     // This dependency is used by the application.
